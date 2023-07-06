@@ -38,11 +38,14 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
 
     ingredients = models.ManyToManyField(Ingredient,
-                                         verbose_name='Список ингредиентов')
+                                         verbose_name='Список ингредиентов',
+                                         related_name='recipe_ingredients',)
     tags = models.ManyToManyField(Tag,
-                                  verbose_name='Список id тегов')
+                                  verbose_name='Список id тегов',
+                                  related_name='recipe_tags')
     author = models.ForeignKey(User,
                                verbose_name='Автор',
+                               related_name='recipe_author',
                                on_delete=models.CASCADE)
     image = models.ImageField(
         verbose_name='Картинка, закодированная в Base64',
@@ -63,9 +66,11 @@ class Recipe(models.Model):
 class IngredientInRecipe(models.Model):
     ingredient = models.ForeignKey(Ingredient,
                                    verbose_name='Ингридиент',
+                                   related_name='ingredient_in_recipe',
                                    on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe,
                                verbose_name='Рецепт',
+                               related_name='recipe_with_ingredients',
                                on_delete=models.CASCADE)
     amount = models.PositiveIntegerField(verbose_name='Количество')
 
@@ -74,7 +79,7 @@ class IngredientInRecipe(models.Model):
         verbose_name_plural = 'Ингридиенты в рецепте'
 
     def __str__(self):
-        return (f'{self.ingredient.name} {self.amount}'
+        return (f'{self.ingredient.name} {self.amount} '
                 f'{self.ingredient.measurement_unit}')
 
 
@@ -101,7 +106,7 @@ class RecipeIsInShoppingCart(models.Model):
 
     recipe = models.ForeignKey(Recipe,
                                verbose_name='Рецепт',
-                               on_delete=models.CASCADE)
+                               on_delete=models.PROTECT)
     user = models.ForeignKey(User,
                              verbose_name='Пользователь',
                              on_delete=models.CASCADE)
