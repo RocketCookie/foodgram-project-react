@@ -128,3 +128,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 AUTH_USER_MODEL = 'users.User'
+
+
+# TODO как его настроить и поле авторизации
+# DJOSER = {
+#     'HIDE_USERS': False,
+#     'LOGIN_FIELD': 'email',
+#     'PERMISSIONS': {
+#         'user_list': [
+#             'rest_framework.permissions.AllowAny'
+#         ],
+#     },
+# }
