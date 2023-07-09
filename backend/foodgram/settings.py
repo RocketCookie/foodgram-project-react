@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'djoser',
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig'
@@ -120,6 +121,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'collected_static'
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -130,6 +135,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
 
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}
+
+
 # TODO как его настроить и поле авторизации
 # DJOSER = {
 #     'HIDE_USERS': False,
@@ -138,5 +153,10 @@ AUTH_USER_MODEL = 'users.User'
 #         'user_list': [
 #             'rest_framework.permissions.AllowAny'
 #         ],
+#           'user': ['rest_framework.permissions.CurrentUserOrAdmin'],
+#           'user_list': ['rest_framework.permissions.CurrentUserOrAdmin'],
 #     },
 # }
+
+
+FILE_INGREDIENTS_PATH = BASE_DIR / 'data/ingredients.json'

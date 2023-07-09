@@ -25,13 +25,11 @@ class User(AbstractUser):
 
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=150,
-        blank=True)
+        max_length=150)
 
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=150,
-        blank=True)
+        max_length=150)
 
     role = models.CharField(
         verbose_name='Права доступа',
@@ -55,7 +53,7 @@ class User(AbstractUser):
         return self.role == self.Roles.ADMIN
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ('username', 'first_name', 'last_name', 'password')
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'password']
 
 
 class Subscription(models.Model):

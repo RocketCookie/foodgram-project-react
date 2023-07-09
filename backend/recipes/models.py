@@ -105,7 +105,7 @@ class IngredientInRecipe(models.Model):
         blank=False)
 
     class Meta:
-        verbose_name = 'Ингридиент рецепте'
+        verbose_name = 'Ингридиент в рецепте'
         verbose_name_plural = 'Ингридиенты в рецепте'
 
     def __str__(self):
