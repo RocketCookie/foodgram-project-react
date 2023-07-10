@@ -135,28 +135,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
 
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ],
+REST_FRAMEWORK = {    
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 6
 }
 
 
-# TODO как его настроить и поле авторизации
-# DJOSER = {
-#     'HIDE_USERS': False,
-#     'LOGIN_FIELD': 'email',
-#     'PERMISSIONS': {
-#         'user_list': [
-#             'rest_framework.permissions.AllowAny'
-#         ],
-#           'user': ['rest_framework.permissions.CurrentUserOrAdmin'],
-#           'user_list': ['rest_framework.permissions.CurrentUserOrAdmin'],
-#     },
-# }
+DJOSER = {
+    'HIDE_USERS': False,
+    'LOGIN_FIELD': 'email',
+    'SERIALIZERS': {
+        'user': 'api.serializers.UserSerializer',
+        'current_user': 'api.serializers.UserSerializer',
+    },
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.IsAuthenticated'],
+    },
+}
 
 
 FILE_INGREDIENTS_PATH = BASE_DIR / 'data/ingredients.json'
