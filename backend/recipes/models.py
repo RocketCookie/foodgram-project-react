@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-
 User = get_user_model()
 
 
@@ -33,9 +32,11 @@ class Tag(models.Model):
 class Ingredient(models.Model):
 
     name = models.CharField(
+        verbose_name='Название',
         max_length=200,
         blank=False)
     measurement_unit = models.CharField(
+        verbose_name='Единица измерения',
         max_length=200,
         blank=False)
 
@@ -52,7 +53,8 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         verbose_name='Список ингредиентов',
-        related_name='recipe_ingredients')
+        related_name='recipe',
+        through='IngredientInRecipe')
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Список id тегов',
@@ -60,7 +62,7 @@ class Recipe(models.Model):
     author = models.ForeignKey(
         User,
         verbose_name='Автор',
-        related_name='recipe_author',
+        related_name='recipe',
         on_delete=models.CASCADE)
     image = models.ImageField(
         verbose_name='Картинка, закодированная в Base64',
@@ -93,12 +95,12 @@ class IngredientInRecipe(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         verbose_name='Ингридиент',
-        related_name='ingredient_in_recipe',
+        related_name='ingredient',
         on_delete=models.CASCADE)
     recipe = models.ForeignKey(
         Recipe,
         verbose_name='Рецепт',
-        related_name='recipe_with_ingredients',
+        related_name='recipe',
         on_delete=models.CASCADE)
     amount = models.PositiveIntegerField(
         verbose_name='Количество',
@@ -113,7 +115,7 @@ class IngredientInRecipe(models.Model):
                 f'{self.ingredient.measurement_unit}')
 
 
-class RecipeInFavorite(models.Model):
+class Favorite(models.Model):
 
     recipe = models.ForeignKey(
         Recipe,
@@ -128,13 +130,16 @@ class RecipeInFavorite(models.Model):
         default_related_name = 'is_favorited'
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
+        constraints = [
+            models.UniqueConstraint(fields=['recipe', 'user'],
+                                    name='unique_favorite')]
 
     def __str__(self):
         return (f'{self.recipe.name} в избранном у '
                 f'{self.user.get_username}')
 
 
-class RecipeIsInShoppingCart(models.Model):
+class ShoppingCart(models.Model):
 
     recipe = models.ForeignKey(
         Recipe,
@@ -149,6 +154,9 @@ class RecipeIsInShoppingCart(models.Model):
         default_related_name = 'is_in_shopping_cart'
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
+        constraints = [
+            models.UniqueConstraint(fields=['recipe', 'user'],
+                                    name='unique_shopping_cart')]
 
     def __str__(self):
         return (f'{self.recipe.name} в избранном у '

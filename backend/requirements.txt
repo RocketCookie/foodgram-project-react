@@ -4,3 +4,4 @@ djoser==2.2.0
 psycopg==3.1.9
 django-filter==23.2
 Pillow==9.5.0
+drf-extra-fields==3.5.0
