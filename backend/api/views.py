@@ -1,11 +1,16 @@
 from django.contrib.auth import get_user_model
-from rest_framework import viewsets
-from rest_framework.permissions import AllowAny
+from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
 from .mixins import ListRetrieveViewSet
 from .permissions import AuthorOrReadOnly
-from .serializers import IngredientSerializer, RecipeSerializer, TagSerializer
-from recipes.models import Ingredient, Recipe, Tag
+from .serializers import (IngredientSerializer, MiniRecipeSerializer,
+                          RecipeSerializer, TagSerializer)
+from .utilities import handle_action
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 
 User = get_user_model()
 
@@ -31,3 +36,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    @action(detail=True, methods=['post', 'delete'])
+    def favorite(self, request, pk=None):
+        return handle_action(request, pk, Favorite,
+                             MiniRecipeSerializer, 'favorite')
+
+    @action(detail=True, methods=['post', 'delete'])
+    def shopping_cart(self, request, pk=None):
+        return handle_action(request, pk, ShoppingCart,
+                             MiniRecipeSerializer, 'shopping_cart')
+
+    @action(detail=False, methods=['get'])
+    def download_shopping_cart(self, request, pk=None):
+        ...

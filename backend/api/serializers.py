@@ -1,5 +1,3 @@
-import pprint
-
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
@@ -186,3 +184,12 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class MiniRecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+        read_only_fields = ('id', 'name', 'image', 'cooking_time')
