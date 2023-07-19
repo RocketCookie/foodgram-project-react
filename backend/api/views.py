@@ -1,16 +1,17 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
+from django.db.models import Sum
+from django.http import HttpResponse
+from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 
-from .mixins import ListRetrieveViewSet
-from .permissions import AuthorOrReadOnly
-from .serializers import (IngredientSerializer, MiniRecipeSerializer,
-                          RecipeSerializer, TagSerializer)
-from .utilities import handle_action
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from api.mixins import ListRetrieveViewSet
+from api.permissions import AuthorOrReadOnly
+from api.serializers import (IngredientSerializer, MiniRecipeSerializer,
+                             RecipeSerializer, TagSerializer)
+from api.utilities import handle_action
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
 
 User = get_user_model()
 
@@ -49,4 +50,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def download_shopping_cart(self, request, pk=None):
-        ...
+        """
+        Скачивает содержимое корзины покупок пользователя
+        и сохраняет его в TXT файл.
+        """
+        ingredients = (
+            IngredientInRecipe.objects
+            .filter(recipe__is_in_shopping_cart__user=request.user)
+            .values('ingredient')
+            .annotate(sum_amount=Sum('amount'))
+            .values_list('ingredient__name',
+                         'sum_amount',
+                         'ingredient__measurement_unit'))
+
+        content = 'Список покупок:\n'
+        for i, ingredient in enumerate(ingredients, start=1):
+            content += (f'{i}. {ingredient[0]} - '
+                        f'{ingredient[1]} '
+                        f'{ingredient[2]}\n')
+
+        response = HttpResponse(content, content_type='text/plain')
+        response['Content-Disposition'] = ('attachment; '
+                                           'filename="shopping_list.txt"')
+        return response
