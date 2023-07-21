@@ -1,10 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 
+from api.filters import RecipeFilter
 from api.mixins import ListRetrieveViewSet
 from api.permissions import AuthorOrReadOnly
 from api.serializers import (IngredientSerializer, MiniRecipeSerializer,
@@ -28,12 +31,16 @@ class IngredientViewSet(ListRetrieveViewSet):
     permission_classes = (AllowAny,)
     serializer_class = IngredientSerializer
     pagination_class = None
+    filter_backends = (SearchFilter,)
+    search_fields = '^name'
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (AuthorOrReadOnly,)
     serializer_class = RecipeSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
