@@ -5,16 +5,22 @@ User = get_user_model()
 
 
 class Tag(models.Model):
+    '''
+    Модель для хранения тегов.
+    '''
+
     name = models.CharField(
         verbose_name='Название',
         max_length=200,
         unique=True,
         blank=False)
+
     color = models.CharField(
         verbose_name='Цвет в HEX',
         max_length=7,
         unique=True,
         blank=False)
+
     slug = models.SlugField(
         verbose_name='Уникальный слаг',
         max_length=200,
@@ -30,11 +36,15 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
+    '''
+    Модель для хранения ингредиентов.
+    '''
 
     name = models.CharField(
         verbose_name='Название',
         max_length=200,
         blank=False)
+
     measurement_unit = models.CharField(
         verbose_name='Единица измерения',
         max_length=200,
@@ -49,35 +59,45 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+    '''
+    Модель для хранения рецептов.
+    '''
 
     ingredients = models.ManyToManyField(
         Ingredient,
         verbose_name='Список ингредиентов',
         related_name='recipe',
         through='IngredientInRecipe')
+
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Список id тегов',
         related_name='recipe_tags')
+
     author = models.ForeignKey(
         User,
         verbose_name='Автор',
         related_name='recipe',
         on_delete=models.CASCADE)
+
     image = models.ImageField(
         verbose_name='Картинка, закодированная в Base64',
         upload_to='recipes/images/',
         blank=False)
+
     name = models.CharField(
         verbose_name='Название',
         max_length=200,
         blank=False)
+
     text = models.TextField(
         verbose_name='Описание',
         blank=False)
+
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления (в минутах)',
         blank=False)
+
     create_date = models.DateTimeField(
         verbose_name='Дата публикации',
         auto_now_add=True)
@@ -92,16 +112,22 @@ class Recipe(models.Model):
 
 
 class IngredientInRecipe(models.Model):
+    '''
+    Модель для хранения связи между ингредиентами и рецептами.
+    '''
+
     ingredient = models.ForeignKey(
         Ingredient,
         verbose_name='Ингридиент',
         related_name='ingredient',
         on_delete=models.CASCADE)
+
     recipe = models.ForeignKey(
         Recipe,
         verbose_name='Рецепт',
         related_name='recipe',
         on_delete=models.CASCADE)
+
     amount = models.PositiveIntegerField(
         verbose_name='Количество',
         blank=False)
@@ -116,11 +142,15 @@ class IngredientInRecipe(models.Model):
 
 
 class Favorite(models.Model):
+    '''
+    Модель для хранения избранных рецептов пользователей.
+    '''
 
     recipe = models.ForeignKey(
         Recipe,
         verbose_name='Рецепт',
         on_delete=models.CASCADE)
+
     user = models.ForeignKey(
         User,
         verbose_name='Пользователь',
@@ -140,11 +170,15 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
+    '''
+    Модель для хранения списка покупок пользователей.
+    '''
 
     recipe = models.ForeignKey(
         Recipe,
         verbose_name='Рецепт',
         on_delete=models.PROTECT)
+
     user = models.ForeignKey(
         User,
         verbose_name='Пользователь',

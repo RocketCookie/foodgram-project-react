@@ -11,6 +11,7 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    '''Сериализатор для модели User.'''
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -23,23 +24,22 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    '''Тег'''
+    '''Сериализатор для модели Tag.'''
     class Meta:
         model = Tag
-        fields = '__all__'
-        # read_only_fields = ('name', 'color', 'slug')
+        fields = 'id', 'name', 'color', 'slug'
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    '''Ингридиент'''
+    '''Сериализатор для модели Ingredient.'''
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
+    '''Сериализатор для модели IngredientInRecipe.'''
     id = serializers.IntegerField(source='ingredient.id')
-    # id = serializers.IntegerField()
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit')
@@ -50,8 +50,7 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    '''Получение рецепта'''
-    # tags = TagSerializer(many=True)
+    '''Сериализатор рецепта.'''
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True)
     author = UserSerializer(read_only=True)
@@ -67,21 +66,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         тегов в сериализованные данные
         '''
         rep = super().to_representation(instance)
-        tags_id = instance.tags.values_list('id', flat=True)
-        tags = Tag.objects.filter(id__in=tags_id)
-        # tags = Tag.objects.filter(
-        #     id__in=[tag.id for tag in instance.tags.all()])
-        rep['tags'] = TagSerializer(tags, many=True).data
+        tag_ids = instance.tags.all().values_list('id', flat=True)
+        tags = Tag.objects.filter(id__in=tag_ids)
+        serializer = TagSerializer(tags, many=True)
+        rep['tags'] = serializer.data
         return rep
-
-    # def to_internal_value(self, data):
-    #     '''
-    #     Переопределение ввода: конвертация
-    #     id тегов в объекты модели Tag
-    #     '''
-    #     internal_value = super().to_internal_value(data)
-    #     internal_value['tags'] = Tag.objects.filter(id__in=data['tags'])
-    #     return internal_value
 
     class Meta:
         model = Recipe
@@ -90,25 +79,32 @@ class RecipeSerializer(serializers.ModelSerializer):
             'is_in_shopping_cart', 'name', 'image', 'text', 'cooking_time')
 
     def get_is_favorited(self, obj):
+        '''
+        Получение информации о том, добавлен ли рецепт
+        в избранное у текущего пользователя.
+        '''
         return check_model(self, obj, Favorite, 'recipe')
 
     def get_is_in_shopping_cart(self, obj):
+        '''
+        Получение информации о том, добавлен ли рецепт
+        в корзину покупок текущего пользователя.
+        '''
         return check_model(self, obj, ShoppingCart, 'recipe')
 
-    # def validate_tags(self, tags):
-    #     """
-    #     Пользовательский валидатор для поля 'tags'.
-    #     Проверяет, что предоставленные идентификаторы тегов существуют.
-    #     """
-    #     print(tags)
-    #     for tag_id in tags:
-    #         try:
-    #             Tag.objects.get(name=tag_id)
-    #         except Tag.DoesNotExist:
-    #             raise serializers.ValidationError(
-    #                 'Недопустимый идентификатор тега: {}'.format(tag_id))
+    def validate_tags(self, tags):
+        '''
+        Пользовательский валидатор для поля 'tags'.
+        Проверяет, что предоставленные идентификаторы тегов существуют.
+        '''
+        for tag in tags:
+            try:
+                Tag.objects.get(id=tag.id)
+            except Tag.DoesNotExist:
+                raise serializers.ValidationError(
+                    'Недопустимый идентификатор тега: {}'.format(tag.id))
 
-    #     return tags
+        return tags
 
     # def validate_ingredients(self, ingredients):
     #     """
@@ -128,14 +124,13 @@ class RecipeSerializer(serializers.ModelSerializer):
     #     return ingredients
 
     def create(self, validated_data):
-        print(validated_data)
-
+        '''
+        Создание нового рецепта.
+        '''
         tags_data = validated_data.pop('tags')
         ingredients_data = validated_data.pop('recipe')
-        # Создание рецепта
         recipe = Recipe.objects.create(**validated_data)
 
-        # Добавление ингредиентов к рецепту
         for ingredient_data in ingredients_data:
             ingredient = Ingredient.objects.get(
                 id=ingredient_data['ingredient']['id'])
@@ -144,28 +139,26 @@ class RecipeSerializer(serializers.ModelSerializer):
                 ingredient=ingredient,
                 amount=ingredient_data['amount']
             )
-        # Добавление тегов к рецепту
-        for tag_id in tags_data:
-            print(tag_id)
-            tag = Tag.objects.get(name=tag_id)
+
+        for tag_data in tags_data:
+            tag_id = tag_data.id
+            tag = Tag.objects.get(id=tag_id)
             recipe.tags.add(tag)
-        # tags = Tag.objects.filter(id__in=tags_data)
-        # recipe.tags.set(tags)
 
         return recipe
 
     def update(self, instance, validated_data):
-        # Обновление полей рецепта, если они присутствуют в validated_data
+        '''
+        Обновление существующего рецепта.
+        '''
         instance.name = validated_data.get('name', instance.name)
         instance.image = validated_data.get('image', instance.image)
         instance.text = validated_data.get('text', instance.text)
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time)
 
-        # Обновление ингредиентов рецепта
         ingredients_data = validated_data.get('recipe')
-        print(validated_data)
-        instance.ingredients.clear()  # Очистить существующие ингредиенты
+        instance.ingredients.clear()
         for ingredient_data in ingredients_data:
             ingredient = Ingredient.objects.get(
                 id=ingredient_data['ingredient']['id'])
@@ -175,9 +168,8 @@ class RecipeSerializer(serializers.ModelSerializer):
                 amount=ingredient_data['amount']
             )
 
-        # Обновление тегов рецепта
         tags_data = validated_data.get('tags')
-        instance.tags.clear()  # Очистить существующие теги рецепта
+        instance.tags.clear()
         for tag_id in tags_data:
             tag = Tag.objects.get(name=tag_id)
             instance.tags.add(tag)
@@ -187,9 +179,21 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class MiniRecipeSerializer(serializers.ModelSerializer):
+    '''
+    Сериализатор для мини-объектов рецептов.
+    '''
     image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
         read_only_fields = ('id', 'name', 'image', 'cooking_time')
+
+
+# class SubscriptionSerializer(UserSerializer):
+#     recipes = MiniRecipeSerializer()
+
+#     class Meta:
+#         model = User
+#         fields = ('email', 'id', 'username', 'first_name',
+#                   'last_name', 'is_subscribed', 'recipes')
