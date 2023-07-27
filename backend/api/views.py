@@ -1,26 +1,28 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from djoser.views import UserViewSet
-
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from api.filters import RecipeFilter
 from api.mixins import ListRetrieveViewSet
+from api.pagination import CustomPageNumberPagination
 from api.permissions import AuthorOrReadOnly
-from api.serializers import (IngredientSerializer, MiniRecipeSerializer,
-                             RecipeSerializer, SubscriptionSerializer,
-                             TagSerializer)
+from api.serializers import (IngredientSerializer, RecipeMinifiedSerializer,
+                             RecipeSerializer, TagSerializer,
+                             UserWithRecipesSerializer)
 from api.utilities import handle_action
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
-from users.models import Subscription
+
+# from rest_framework.response import Response
+# from django.shortcuts import get_object_or_404
+
 
 User = get_user_model()
 
@@ -76,7 +78,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         Добавляет или удаляет рецепт из избранного пользователя.
         '''
         return handle_action(request, pk, Favorite,
-                             MiniRecipeSerializer, 'favorite')
+                             RecipeMinifiedSerializer, 'favorite')
 
     @action(detail=True, methods=['post', 'delete'])
     def shopping_cart(self, request, pk=None):
@@ -84,7 +86,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         Добавляет или удаляет рецепт из корзины покупок пользователя.
         '''
         return handle_action(request, pk, ShoppingCart,
-                             MiniRecipeSerializer, 'shopping_cart')
+                             RecipeMinifiedSerializer, 'shopping_cart')
 
     @action(detail=False, methods=['get'])
     def download_shopping_cart(self, request, pk=None):
@@ -148,3 +150,41 @@ class RecipeViewSet(viewsets.ModelViewSet):
     #     user = self.get_object()
     #     # ...
     #     return Response({'message': 'Subscribed successfully'})
+
+class CustomUserViewSet(UserViewSet):
+    '''
+    Кастомный пользователь.
+    '''
+
+    @action(methods=['get'],
+            detail=False,
+            pagination_class=CustomPageNumberPagination,
+            permission_classes=(IsAuthenticated,))
+    def subscriptions(self, request):
+        '''
+        Получить пагинированный список пользователей,
+        на которых подписан текущий пользователь.
+        '''
+        user = request.user
+        # recipes_limit = request.GET.get('recipes_limit', None)
+        # print(recipes_limit, type(recipes_limit))
+
+        queryset = User.objects.filter(subscribing__user=user)
+        paginator = self.pagination_class()
+
+        result_page = paginator.paginate_queryset(queryset, request)
+        # print(result_page)
+
+        # if recipes_limit:
+        #     for user in result_page:
+        #         recipes = user.recipes.all()[:int(recipes_limit)]
+        #         print(recipes)
+        #         print(user.recipes)
+        #         user.recipes.set(recipes)
+        #         print(user.recipes)
+
+        serializer = UserWithRecipesSerializer(
+            result_page,
+            many=True,
+            context={'request': request})
+        return paginator.get_paginated_response(serializer.data)

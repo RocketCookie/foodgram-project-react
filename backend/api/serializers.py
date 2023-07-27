@@ -55,7 +55,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(), many=True)
     author = UserSerializer(read_only=True)
     ingredients = IngredientInRecipeSerializer(
-        many=True, required=True, source='recipe')
+        many=True, required=True, source='recipe_ingredients')
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField()
@@ -128,7 +128,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         Создание нового рецепта.
         '''
         tags_data = validated_data.pop('tags')
-        ingredients_data = validated_data.pop('recipe')
+        ingredients_data = validated_data.pop('recipe_ingredients')
         recipe = Recipe.objects.create(**validated_data)
 
         for ingredient_data in ingredients_data:
@@ -157,7 +157,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time)
 
-        ingredients_data = validated_data.get('recipe')
+        ingredients_data = validated_data.get('recipe_ingredients')
         instance.ingredients.clear()
         for ingredient_data in ingredients_data:
             ingredient = Ingredient.objects.get(
@@ -178,7 +178,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
 
-class MiniRecipeSerializer(serializers.ModelSerializer):
+class RecipeMinifiedSerializer(serializers.ModelSerializer):
     '''
     Сериализатор для мини-объектов рецептов.
     '''
@@ -190,10 +190,35 @@ class MiniRecipeSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', 'image', 'cooking_time')
 
 
-# class SubscriptionSerializer(UserSerializer):
-#     recipes = MiniRecipeSerializer()
+class UserWithRecipesSerializer(UserSerializer):
+    '''
+    Сериализатор для представления пользователя с его рецептами
+    и их количеством.
+    '''
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
 
-#     class Meta:
-#         model = User
-#         fields = ('email', 'id', 'username', 'first_name',
-#                   'last_name', 'is_subscribed', 'recipes')
+    class Meta:
+        model = User
+        fields = UserSerializer.Meta.fields + ('recipes_count', 'recipes')
+
+    def get_recipes_count(self, obj):
+        '''
+        Возвращает количество рецептов пользователя.
+        '''
+        return obj.recipes.count()
+
+    def get_recipes(self, obj):
+        '''
+        Возвращает рецепты пользователя.
+        '''
+        request = self.context.get('request')
+        recipes_limit = request.GET.get('recipes_limit', None)
+
+        recipes = obj.recipes.all()
+
+        if recipes_limit:
+            recipes = recipes[:int(recipes_limit)]
+
+        serializer = RecipeMinifiedSerializer(recipes, many=True)
+        return serializer.data
