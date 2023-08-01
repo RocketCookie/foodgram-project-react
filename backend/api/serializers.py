@@ -106,22 +106,29 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return tags
 
-    # def validate_ingredients(self, ingredients):
-    #     """
-    #     Пользовательский валидатор для поля 'tags'.
-    #     Проверяет, что предоставленные идентификаторы тегов существуют.
-    #     """
-    #     print(ingredients)
-    #     print(self.initial_data)
-    #     for ingredient in ingredients:
-    #         try:
-    #             Ingredient.objects.get(id=ingredient['id'])
-    #         except Ingredient.DoesNotExist:
-    #             raise serializers.ValidationError(
-    #                 'Недопустимый идентификатор тега: '
-    #                  '{}'.format(ingredient['id']))
+    def validate_ingredients(self, ingredients):
+        '''
+        Пользовательский валидатор для поля 'ingredients'.
+        '''
+        # unique_id = set([ingredient.get('ingredient').get('id')
+        #                 for ingredient in ingredients])
+        # print(f'уникальный список {unique_id}')
+        for ingredient in ingredients:
+            try:
+                ingredient_id = ingredient.get('ingredient').get('id')
+                Ingredient.objects.get(id=ingredient_id)
+            except Ingredient.DoesNotExist:
+                raise serializers.ValidationError(
+                    'Недопустимый идентификатор ингредиента: '
+                    '{}'.format(ingredient_id))
 
-    #     return ingredients
+            amount = ingredient.get('amount')
+            if amount <= 0:
+                raise serializers.ValidationError(
+                    'Недопустимое значение количества: '
+                    '{}'.format(amount))
+
+        return ingredients
 
     def create(self, validated_data):
         '''
@@ -137,8 +144,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             IngredientInRecipe.objects.create(
                 recipe=recipe,
                 ingredient=ingredient,
-                amount=ingredient_data['amount']
-            )
+                amount=ingredient_data['amount'])
 
         for tag_data in tags_data:
             tag_id = tag_data.id
@@ -165,8 +171,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             IngredientInRecipe.objects.create(
                 recipe=instance,
                 ingredient=ingredient,
-                amount=ingredient_data['amount']
-            )
+                amount=ingredient_data['amount'])
 
         tags_data = validated_data.get('tags')
         instance.tags.clear()
@@ -218,6 +223,12 @@ class UserWithRecipesSerializer(UserSerializer):
         recipes = obj.recipes.all()
 
         if recipes_limit:
+            try:
+                recipes_limit = int(recipes_limit)
+            except ValueError:
+                raise ValueError(
+                    'Значение recipes_limit должно быть целым числом.')
+
             recipes = recipes[:int(recipes_limit)]
 
         serializer = RecipeMinifiedSerializer(recipes, many=True)
