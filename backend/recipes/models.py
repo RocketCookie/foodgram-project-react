@@ -166,7 +166,7 @@ class Favorite(models.Model):
 
     def __str__(self):
         return (f'{self.recipe.name} в избранном у '
-                f'{self.user.get_username}')
+                f'{self.user.username}')
 
 
 class ShoppingCart(models.Model):
@@ -194,4 +194,4 @@ class ShoppingCart(models.Model):
 
     def __str__(self):
         return (f'{self.recipe.name} в избранном у '
-                f'{self.user.get_username}')
+                f'{self.user.username}')

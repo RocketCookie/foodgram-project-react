@@ -8,11 +8,10 @@ from djoser.utils import login_user
 from djoser.views import TokenCreateView, UserViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from api.filters import RecipeFilter
+from api.filters import RecipeFilter, CustomSearchFilter
 from api.mixins import ListRetrieveViewSet
 from api.pagination import CustomPageNumberPagination
 from api.permissions import AuthorOrReadOnly
@@ -20,7 +19,6 @@ from api.serializers import (IngredientSerializer, RecipeMinifiedSerializer,
                              RecipeSerializer, TagSerializer,
                              UserWithRecipesSerializer)
 from api.utilities import MESSAGES
-# from api.utilities import handle_action
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
 from users.models import Subscription
@@ -28,9 +26,46 @@ from users.models import Subscription
 User = get_user_model()
 
 
+# как упростить и использовать сразу на 3 представления?
+# В данный момент работает с избранным и корзиной.
+# Но для подписки надо добавить еще один(или более) параметр,
+# так как названия полей в модели разное.
+# Subscription.objects.create(user=user, subscribing=queryset)
+# Как перенести subscribing=queryset в аргументы?
+def handle_action(request, pk, model, miniserializer, error_name: str):
+    '''
+    Обрабатывает добавление или удаление рецепта в определенные
+    списки (избранное или корзина покупок).
+    '''
+    recipe = get_object_or_404(Recipe, pk=pk)
+    user = request.user
+
+    if request.method == 'POST':
+        if model.objects.filter(recipe=recipe, user=user).exists():
+            return Response(
+                {'errors': MESSAGES[error_name]['cr_error']},
+                status=status.HTTP_400_BAD_REQUEST)
+        else:
+            model.objects.create(recipe=recipe, user=user)
+            serializer = miniserializer(recipe)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED)
+
+    elif request.method == 'DELETE':
+        try:
+            item = model.objects.get(recipe=recipe, user=user)
+            item.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except model.DoesNotExist:
+            return Response(
+                {'errors': MESSAGES[error_name]['del_error']},
+                status=status.HTTP_400_BAD_REQUEST)
+
+
 class CustomTokenCreateView(TokenCreateView):
     '''
-    Представление для создания токена
+    Представление для создания токена.
     '''
 
     def _action(self, serializer):
@@ -63,7 +98,7 @@ class IngredientViewSet(ListRetrieveViewSet):
     permission_classes = (AllowAny,)
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = (SearchFilter,)
+    filter_backends = (CustomSearchFilter,)
     search_fields = '^name'
 
 

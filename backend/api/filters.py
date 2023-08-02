@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django_filters import BooleanFilter, FilterSet, ModelMultipleChoiceFilter
+from rest_framework.filters import SearchFilter
 
 from recipes.models import Recipe, Tag
 
@@ -33,3 +34,10 @@ class RecipeFilter(FilterSet):
         if value:
             return queryset.filter(is_in_shopping_card__user=user)
         return queryset.exclude(is_in_shopping_cart__user=user)
+
+
+class CustomSearchFilter(SearchFilter):
+    '''
+    Кастомный фильтр поиска с переопределенным параметром поиска на name.
+    '''
+    search_param = 'name'

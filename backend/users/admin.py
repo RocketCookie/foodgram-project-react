@@ -1,8 +1,9 @@
 from django.contrib import admin
 
-from .models import Subscription, User
+from users.models import Subscription, User
 
 
+@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = (
         'pk',
@@ -13,10 +14,13 @@ class UserAdmin(admin.ModelAdmin):
         'role')
 
     list_editable = ('role',)
-    search_fields = ('email',)
+    search_fields = ('email', 'username')
     list_filter = ('role',)
     empty_value_display = '-пусто-'
 
 
-admin.site.register(User, UserAdmin)
-admin.site.register(Subscription)
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'user', 'subscribing')
+    list_editable = ('user', 'subscribing')
+    empty_value_display = '-пусто-'
