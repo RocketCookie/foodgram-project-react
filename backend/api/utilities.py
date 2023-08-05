@@ -30,7 +30,7 @@ MESSAGES = {
 }
 
 
-def check_model(self, obj, model, related_field):
+def is_item_linked_to_user(self, obj, model, related_field):
     '''
     Проверяет, является ли объект связанным
     с пользователем в базе данных.

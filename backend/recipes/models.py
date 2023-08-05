@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 
 User = get_user_model()
@@ -63,7 +64,6 @@ class Recipe(models.Model):
         verbose_name='Список ингредиентов',
         related_name='recipes',
         through='IngredientInRecipe',
-        validators=(),
     )
 
     tags = models.ManyToManyField(
@@ -104,6 +104,22 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+    def validate_ingredients(self) -> None:
+        '''
+        Валидирует количество ингридиентов.
+        '''
+        if self.ingredients.count() < 1:
+            raise ValidationError(
+                'Количество ингредиентов должно быть 1 и более.'
+            )
+
+# Из-за тупой логики создания рецепта,
+# рецепт создается без ингредиентов 😡
+# Добавил валидацию в сериалайзер
+    def clean(self) -> None:
+        super().clean()
+        self.validate_ingredients()
 
 
 class IngredientInRecipe(models.Model):

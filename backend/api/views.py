@@ -36,12 +36,6 @@ from users.models import Subscription
 User = get_user_model()
 
 
-# как упростить и использовать сразу на 3 представления?
-# В данный момент работает с избранным и корзиной.
-# Но для подписки надо добавить еще один(или более) параметр,
-# так как названия полей в модели разное.
-# Subscription.objects.create(user=user, subscribing=queryset)
-# Как перенести subscribing=queryset в аргументы?
 def handle_action(request, pk, model, miniserializer, error_name: str):
     '''
     Обрабатывает добавление или удаление рецепта в определенные
@@ -140,62 +134,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         '''
         Добавляет или удаляет рецепт из избранного пользователя.
         '''
-        recipe = get_object_or_404(Recipe, pk=pk)
-        user = request.user
-
-        if request.method == 'POST':
-            if Favorite.objects.filter(recipe=recipe, user=user).exists():
-                return Response(
-                    {'errors': MESSAGES['favorite']['cr_error']},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            else:
-                Favorite.objects.create(recipe=recipe, user=user)
-                serializer = RecipeMinifiedSerializer(recipe)
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
-        elif request.method == 'DELETE':
-            try:
-                item = Favorite.objects.get(recipe=recipe, user=user)
-                item.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            except Favorite.DoesNotExist:
-                return Response(
-                    {'errors': MESSAGES['favorite']['del_error']},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        return handle_action(
+            request, pk, Favorite, RecipeMinifiedSerializer, 'favorite'
+        )
 
     @action(detail=True, methods=['post', 'delete'])
     def shopping_cart(self, request, pk=None):
         '''
         Добавляет или удаляет рецепт из корзины покупок пользователя.
         '''
-        recipe = get_object_or_404(Recipe, pk=pk)
-        user = request.user
-
-        if request.method == 'POST':
-            if ShoppingCart.objects.filter(recipe=recipe, user=user).exists():
-                return Response(
-                    {'errors': MESSAGES['shopping_cart']['cr_error']},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            else:
-                ShoppingCart.objects.create(recipe=recipe, user=user)
-                serializer = RecipeMinifiedSerializer(recipe)
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
-        elif request.method == 'DELETE':
-            try:
-                item = ShoppingCart.objects.get(recipe=recipe, user=user)
-                item.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            except ShoppingCart.DoesNotExist:
-                return Response(
-                    {'errors': MESSAGES['shopping_cart']['del_error']},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        return handle_action(
+            request,
+            pk,
+            ShoppingCart,
+            RecipeMinifiedSerializer,
+            'shopping_cart',
+        )
 
     @action(detail=False, methods=['get'])
     def download_shopping_cart(self, request, pk=None):

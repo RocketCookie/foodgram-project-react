@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from api.utilities import check_model
+from api.utilities import is_item_linked_to_user
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -33,7 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        return check_model(self, obj, Subscription, 'subscribing')
+        return is_item_linked_to_user(self, obj, Subscription, 'subscribing')
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -112,20 +112,24 @@ class RecipeSerializer(serializers.ModelSerializer):
         Получение информации о том, добавлен ли рецепт
         в избранное у текущего пользователя.
         '''
-        return check_model(self, obj, Favorite, 'recipe')
+        return is_item_linked_to_user(self, obj, Favorite, 'recipe')
 
     def get_is_in_shopping_cart(self, obj):
         '''
         Получение информации о том, добавлен ли рецепт
         в корзину покупок текущего пользователя.
         '''
-        return check_model(self, obj, ShoppingCart, 'recipe')
+        return is_item_linked_to_user(self, obj, ShoppingCart, 'recipe')
 
     def validate_tags(self, tags):
         '''
         Пользовательский валидатор для поля 'tags'.
         Проверяет, что предоставленные идентификаторы тегов существуют.
         '''
+        if not tags:
+            raise serializers.ValidationError(
+                'Количество тегов должно быть 1 и более.'
+            )
         for tag in tags:
             try:
                 Tag.objects.get(id=tag.id)
@@ -142,6 +146,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         # unique_id = set([ingredient.get('ingredient').get('id')
         #                 for ingredient in ingredients])
         # print(f'уникальный список {unique_id}')
+
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Количество ингредиентов должно быть 1 и более.'
+            )
         for ingredient in ingredients:
             try:
                 ingredient_id = ingredient.get('ingredient').get('id')
