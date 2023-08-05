@@ -16,20 +16,17 @@
 
 Установить [Docker](https://docs.docker.com/get-docker/) и [Docker Compose](https://docs.docker.com/compose/install/).
 
-
-
-Склонировать репозиторий: `git@github.com:RocketCookie/foodgram-project-react.git`.
+Склонировать репозиторий: `gi clone git@github.com:RocketCookie/foodgram-project-react.git`.
 Создать файл '.env' на основе '.env.example' и заполнить его валидными данными.
 
-Запустить приложение с помощью команды: `docker compose up --build`.
+Запустить приложение с помощью команды: `make run_app`.
 
 ## Миграция и статика
 
-Выполните миграции: `docker compose exec backend python manage.py migrate`.
+Выполните миграции и сбор статических файлов
 
-Соберите статические файлы: `docker compose exec backend python manage.py collectstatic`.
+`make migration_and_static`
 
-Скопируйте собранные статические файлы в папку static: `docker compose exec backend cp -r /app/collected_static/. /static/static/`.
+### Автор
 
-### Автор:
 Олег Гуров

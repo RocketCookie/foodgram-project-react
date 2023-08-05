@@ -7,4 +7,5 @@ class CustomPageNumberPagination(PageNumberPagination):
     который расширяет класс PageNumberPagination
     из Django REST Framework.
     '''
+
     page_size_query_param = 'limit'
