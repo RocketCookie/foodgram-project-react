@@ -80,18 +80,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField()
 
-    def to_representation(self, instance):
-        '''
-        Переопределение вывода и конвертация id
-        тегов в сериализованные данные
-        '''
-        rep = super().to_representation(instance)
-        tag_ids = instance.tags.all().values_list('id', flat=True)
-        tags = Tag.objects.filter(id__in=tag_ids)
-        serializer = TagSerializer(tags, many=True)
-        rep['tags'] = serializer.data
-        return rep
-
     class Meta:
         model = Recipe
         fields = (
@@ -106,6 +94,18 @@ class RecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
+
+    def to_representation(self, instance):
+        '''
+        Переопределение вывода и конвертация id
+        тегов в сериализованные данные
+        '''
+        rep = super().to_representation(instance)
+        tag_ids = instance.tags.all().values_list('id', flat=True)
+        tags = Tag.objects.filter(id__in=tag_ids)
+        serializer = TagSerializer(tags, many=True)
+        rep['tags'] = serializer.data
+        return rep
 
     def get_is_favorited(self, obj):
         '''
