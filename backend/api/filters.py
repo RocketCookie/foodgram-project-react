@@ -1,4 +1,3 @@
-from django.contrib.auth.decorators import login_required
 from django_filters import BooleanFilter, FilterSet, ModelMultipleChoiceFilter
 from rest_framework.filters import SearchFilter
 
@@ -13,28 +12,26 @@ class RecipeFilter(FilterSet):
         field_name='tags__slug',
         to_field_name='slug',
     )
-    favorite = BooleanFilter(method='filter_in_favorite')
-    shopping_card = BooleanFilter(method='filter_is_in_shopping_card')
+    is_favorite = BooleanFilter(method='filter_in_favorite')
+    is_in_shopping_card = BooleanFilter(method='filter_is_in_shopping_card')
 
     class Meta:
         model = Recipe
-        fields = ('tags', 'author')
+        fields = ('tags', 'author', 'is_favorite', 'is_in_shopping_card')
 
-    @login_required
     def filter_in_favorite(self, queryset, name, value):
         '''Фильтрует рецепты по наличию в избранном пользователя.'''
         user = self.request.user
-        if value:
-            return queryset.filter(in_favorite__user=user)
-        return queryset.exclude(is_favorited__user=user)
+        if value and user.is_authenticated:
+            return queryset.filter(is_favorited__user=user)
+        return queryset
 
-    @login_required
     def filter_is_in_shopping_card(self, queryset, name, value):
         '''Фильтрует рецепты по наличию в корзине покупок пользователя.'''
         user = self.request.user
-        if value:
-            return queryset.filter(is_in_shopping_card__user=user)
-        return queryset.exclude(is_in_shopping_cart__user=user)
+        if value and user.is_authenticated:
+            return queryset.filter(is_in_shopping_card__recipe=user)
+        return queryset
 
 
 # /api/recipes/?page=1&limit=6&is_favorited=1&author=2&tags=red&tags=test

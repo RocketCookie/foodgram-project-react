@@ -29,7 +29,7 @@ class Tag(models.Model):
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -50,7 +50,7 @@ class Ingredient(models.Model):
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -102,7 +102,7 @@ class Recipe(models.Model):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     def validate_ingredients(self) -> None:
@@ -114,11 +114,9 @@ class Recipe(models.Model):
                 'Количество ингредиентов должно быть 1 и более.'
             )
 
-# Из-за тупой логики создания рецепта,
-# рецепт создается без ингредиентов 😡
-# Добавил валидацию в сериалайзер
     def clean(self) -> None:
         super().clean()
+        self.save()
         self.validate_ingredients()
 
 
@@ -149,7 +147,7 @@ class IngredientInRecipe(models.Model):
         verbose_name = 'Ингридиент в рецепте'
         verbose_name_plural = 'Ингридиенты в рецепте'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f'{self.ingredient.name} {self.amount} '
             f'{self.ingredient.measurement_unit}'
@@ -179,7 +177,7 @@ class Favorite(models.Model):
             )
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.recipe.name} в избранном у ' f'{self.user.username}'
 
 
@@ -206,7 +204,7 @@ class ShoppingCart(models.Model):
             )
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f'{self.recipe.name} в списке покупок у ' f'{self.user.username}'
         )

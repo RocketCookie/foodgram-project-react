@@ -105,7 +105,7 @@ class IngredientViewSet(ListRetrieveViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     filter_backends = (CustomSearchFilter,)
-    search_fields = '^name'
+    search_fields = ('^name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
