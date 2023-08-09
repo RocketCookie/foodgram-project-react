@@ -3,14 +3,8 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from api.utilities import is_item_linked_to_user
-from recipes.models import (
-    Favorite,
-    Ingredient,
-    IngredientInRecipe,
-    Recipe,
-    ShoppingCart,
-    Tag,
-)
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
 from users.models import Subscription
 
 User = get_user_model()

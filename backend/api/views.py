@@ -11,26 +11,16 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from api.filters import RecipeFilter, CustomSearchFilter
+from api.filters import CustomSearchFilter, RecipeFilter
 from api.mixins import ListRetrieveViewSet
 from api.pagination import CustomPageNumberPagination
 from api.permissions import AuthorOrReadOnly
-from api.serializers import (
-    IngredientSerializer,
-    RecipeMinifiedSerializer,
-    RecipeSerializer,
-    TagSerializer,
-    UserWithRecipesSerializer,
-)
+from api.serializers import (IngredientSerializer, RecipeMinifiedSerializer,
+                             RecipeSerializer, TagSerializer,
+                             UserWithRecipesSerializer)
 from api.utilities import MESSAGES
-from recipes.models import (
-    Favorite,
-    Ingredient,
-    IngredientInRecipe,
-    Recipe,
-    ShoppingCart,
-    Tag,
-)
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
 from users.models import Subscription
 
 User = get_user_model()
