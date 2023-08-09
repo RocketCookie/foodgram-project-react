@@ -16,7 +16,12 @@
 
 Установить [Docker](https://docs.docker.com/get-docker/) и [Docker Compose](https://docs.docker.com/compose/install/).
 
-Склонировать репозиторий: `gi clone git@github.com:RocketCookie/foodgram-project-react.git`.
+Склонировать репозиторий:
+
+```
+git clone git@github.com:RocketCookie/foodgram-project-react.git
+```
+
 Создать файл '.env' на основе '.env.example' и заполнить его валидными данными.
 
 Запустить приложение с помощью команды: `make run_app`.
