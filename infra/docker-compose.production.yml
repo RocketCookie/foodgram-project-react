@@ -14,7 +14,7 @@ services:
       - pg_data:/var/lib/postgresql/data
     restart: always
   backend:
-    image: foodgram_backend
+    image: rocketcookie/foodgram_backend
     build: ../backend
     env_file:
       - ../.env
@@ -25,7 +25,7 @@ services:
     depends_on:
       - db
   frontend:
-    image: foodgram_frontend
+    image: rocketcookie/foodgram_frontend
     build:
       context: ../frontend
       dockerfile: Dockerfile
