@@ -1,43 +1,45 @@
-from django.contrib.auth.decorators import login_required
-from django_filters import BooleanFilter, FilterSet, ModelMultipleChoiceFilter
+from django_filters.rest_framework import FilterSet, filters
 from rest_framework.filters import SearchFilter
 
 from recipes.models import Recipe, Tag
 
 
 class RecipeFilter(FilterSet):
-    '''Фильтр для модели Recipe.'''
+    '''
+    Фильтр для модели Recipe.
+    '''
 
-    tags = ModelMultipleChoiceFilter(
+    tags = filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(),
         field_name='tags__slug',
         to_field_name='slug',
     )
-    favorite = BooleanFilter(method='filter_in_favorite')
-    shopping_card = BooleanFilter(method='filter_is_in_shopping_card')
+    is_favorited = filters.BooleanFilter(method='filter_is_favorited')
+    is_in_shopping_cart = filters.BooleanFilter(
+        method='filter_is_in_shopping_cart'
+    )
 
     class Meta:
         model = Recipe
         fields = ('tags', 'author')
 
-    @login_required
-    def filter_in_favorite(self, queryset, name, value):
-        '''Фильтрует рецепты по наличию в избранном пользователя.'''
+    def filter_is_favorited(self, queryset, name, value):
+        '''
+        Фильтрует рецепты по наличию в избранном пользователя.
+        '''
         user = self.request.user
-        if value:
-            return queryset.filter(in_favorite__user=user)
-        return queryset.exclude(is_favorited__user=user)
+        if value and user.is_authenticated:
+            return queryset.filter(is_favorited__user=user)
+        return queryset
 
-    @login_required
-    def filter_is_in_shopping_card(self, queryset, name, value):
-        '''Фильтрует рецепты по наличию в корзине покупок пользователя.'''
+    def filter_is_in_shopping_cart(self, queryset, name, value):
+        '''
+        Фильтрует рецепты по наличию в корзине покупок пользователя.
+        '''
         user = self.request.user
-        if value:
-            return queryset.filter(is_in_shopping_card__user=user)
-        return queryset.exclude(is_in_shopping_cart__user=user)
-
-
-# /api/recipes/?page=1&limit=6&is_favorited=1&author=2&tags=red&tags=test
+        if value and user.is_authenticated:
+            return queryset.filter(is_in_shopping_cart__user=user)
+        return queryset
 
 
 class CustomSearchFilter(SearchFilter):

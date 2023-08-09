@@ -36,8 +36,8 @@ def is_item_linked_to_user(self, obj, model, related_field):
     с пользователем в базе данных.
     '''
     request = self.context.get('request')
-    user = self.context['request'].user
+    user = request.user
 
-    if request and request.user.is_authenticated:
+    if request and user.is_authenticated:
         return model.objects.filter(user=user, **{related_field: obj}).exists()
     return False
