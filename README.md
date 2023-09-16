@@ -14,11 +14,11 @@
 
 ## Технологический стек
 
-* Python 3.11.4
-* Django 4.2.3
+* Python 3.11.5
+* Django 4.2.5
 * Django REST Framework 3.14.0
-* PostgreSQL 15.3
-* Docker 24.0.2
+* PostgreSQL 15.4
+* Docker 24.0.6
 
 ## Установка и запуск проекта локально
 
