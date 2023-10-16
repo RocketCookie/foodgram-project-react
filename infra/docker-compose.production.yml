@@ -7,7 +7,7 @@ volumes:
 
 services:
   db:
-    image: postgres:15.3-alpine
+    image: postgres:15.4-alpine
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
@@ -30,7 +30,7 @@ services:
     volumes:
       - ../frontend/:/app/result_build
   nginx:
-    image: nginx:1.25.1
+    image: nginx:1.25.2-alpine-slim
     env_file: .env
     ports:
       - ${NGINX_PORT}:80
